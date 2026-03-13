@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"time"
+	"log"
+	"fmt"
 
 	"church-backend/internal/utils"
 	"github.com/its-ernest/echox/store"
+	"church-backend/internal/repository"
 )
 
 type AuthService struct {
 	store store.Store
+	repo  *repository.MemberRepository
 }
 
-func NewAuthService(s store.Store) *AuthService {
-	return &AuthService{store: s}
+func NewAuthService(s store.Store, r *repository.MemberRepository) *AuthService {
+	return &AuthService{store: s, repo: r}
 }
 
 func (s *AuthService) RequestOTP(ctx context.Context, phone string) error {
@@ -39,5 +43,10 @@ func (s *AuthService) VerifyOTP(ctx context.Context, phone, code string) error {
 	}
 
 	_ = s.store.Delete(ctx, "otp:"+phone)
+
+	if err := s.repo.EnsureMember(ctx, phone); err != nil {
+        log.Printf("[DB ERROR] Failed to ensure member %s: %v", phone, err)
+        return fmt.Errorf("could not sync user record: %v", err)
+    }
 	return nil
 }

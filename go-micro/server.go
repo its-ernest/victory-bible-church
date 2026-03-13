@@ -4,18 +4,35 @@ import (
     "fmt"
     "log"
     "os"
+    "context"
 
+    //internals
     "church-backend/internal/auth"
     "church-backend/internal/service"
+    "church-backend/internal/database"
+    "church-backend/internal/repository"
+
     "github.com/its-ernest/echox/store"
 
     "github.com/labstack/echo/v5"
     "github.com/labstack/echo/v5/middleware"
     "github.com/labstack/echo-jwt/v5"
+
+    // member routes
+    "church-backend/internal/routes/members"
+    "github.com/golang-jwt/jwt/v5"
 )
 
 func main() {
     e := echo.New()
+    
+    ctx := context.Background()
+    dbURL := os.Getenv("DB_URL")
+    dbPool, err := database.NewPostgresPool(ctx, dbURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer dbPool.Close()
 
     jwtSecretStr := os.Getenv("JWT_SECRET")
     if jwtSecretStr == "" {
@@ -24,7 +41,7 @@ func main() {
     }
     jwtSecret := []byte(jwtSecretStr)
 
-    // Setup Logger (v5 style)
+    // echo v5 logger middleware
     e.Use(middleware.Recover())
     e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
         LogStatus: true,
@@ -46,21 +63,27 @@ func main() {
 
     // initialize the MemoryStore from my echox
 	memStore := store.NewMemoryStore()
+    memberRepo := &repository.MemberRepository{Pool: dbPool}
 
-	authService := service.NewAuthService(memStore)
+	authService := service.NewAuthService(memStore, memberRepo)
 	authHandler := auth.NewHandler(authService, jwtSecret)
 
-    // routes groups
+    // auth routes groups
 	authGroup := e.Group("/auth")
 	authHandler.Register(authGroup, memStore)
+
     // members route
-    members := e.Group("/members")
-    members.Use(echojwt.WithConfig(echojwt.Config{
+    memberService := members.NewService(memberRepo)
+    memberHandler := members.NewHandler(memberService)
+    memberGroup := e.Group("/members")
+    memberGroup.Use(echojwt.WithConfig(echojwt.Config{
         SigningKey: jwtSecret,
+        // ghost bug fixed: auth and members handlers now matches this claims
+        NewClaimsFunc: func(c *echo.Context) jwt.Claims {
+            return new(jwt.RegisteredClaims)
+        },
     }))
-    members.GET("/profile", func(c *echo.Context) error {
-        return c.JSON(200, map[string]string{"status": "authenticated"})
-    })
+    members.RegisterRoutes(memberGroup, memberHandler)
 
 	log.Println("Church Backend starting on :8080")
 	for _, route := range e.Router().Routes() {

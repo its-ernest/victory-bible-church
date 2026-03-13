@@ -1,25 +1,27 @@
-version: "3.9"
-
 services:
-  redis:
-    image: redis:7-alpine
-    container_name: church-redis
+  db:
+    image: postgres:16-alpine
+    container_name: church-db
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: church_db
     ports:
-      - "6379:6379"
+      - "5432:5432"
     volumes:
-      - redis_data:/data
-    command: redis-server --appendonly yes
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
-  api:
+  app:
     build: .
     container_name: church-api
-    depends_on:
-      - redis
     ports:
       - "8080:8080"
     environment:
-      REDIS_ADDR: redis:6379
-    restart: unless-stopped
+      DB_URL: postgres://user:password@db:5432/church_db?sslmode=disable
+      JWT_SECRET: church_secret_key
+    depends_on:
+      - db
 
 volumes:
-  redis_data:
+  pgdata:
