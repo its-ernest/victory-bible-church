@@ -64,3 +64,38 @@ func (r *MemberRepository) EnsureMember(ctx context.Context, phone string) error
     _, err := r.Pool.Exec(ctx, query, phone)
     return err
 }
+
+func (r *MemberRepository) SearchMembers(ctx context.Context, query string, limit, offset int) ([]models.Member, error) {
+    var members []models.Member
+    
+    // search by name, email, or phone
+    sql := `
+        SELECT m.id, m.phone, m.first_name, m.last_name, m.email, m.status_id, s.name as status
+        FROM church.members m
+        JOIN church.member_status s ON m.status_id = s.id
+        WHERE m.first_name ILIKE $1 
+           OR m.last_name ILIKE $1 
+           OR m.phone ILIKE $1 
+           OR m.email ILIKE $1
+        ORDER BY m.last_name ASC
+        LIMIT $2 OFFSET $3
+    `
+    
+    searchParam := "%" + query + "%"
+    rows, err := r.Pool.Query(ctx, sql, searchParam, limit, offset)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    for rows.Next() {
+        var m models.Member
+        err := rows.Scan(&m.ID, &m.Phone, &m.FirstName, &m.LastName, &m.Email, &m.StatusID, &m.Status)
+        if err != nil {
+            return nil, err
+        }
+        members = append(members, m)
+    }
+    
+    return members, nil
+}

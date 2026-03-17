@@ -50,3 +50,11 @@ func (s *Service) UpdateMember(ctx context.Context, phone string, firstName, las
     }
     return s.repo.UpdateProfile(ctx, m)
 }
+
+func (s *Service) Search(ctx context.Context, query string, page, pageSize int) ([]models.Member, error) {
+    if pageSize <= 0 { pageSize = 10 }
+    if page <= 0 { page = 1 }
+    
+    offset := (page - 1) * pageSize
+    return s.repo.SearchMembers(ctx, query, pageSize, offset)
+}

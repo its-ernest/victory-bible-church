@@ -2,6 +2,7 @@ package members
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v5"
@@ -71,8 +72,22 @@ func (h *Handler) UpdateProfile(c *echo.Context) error {
 	})
 }
 
+func (h *Handler) SearchMembers(c *echo.Context) error {
+    query := c.QueryParam("q")
+    page, _ := strconv.Atoi(c.QueryParam("page"))
+    limit, _ := strconv.Atoi(c.QueryParam("limit"))
+
+    results, err := h.service.Search(c.Request().Context(), query, page, limit)
+    if err != nil {
+        return echo.NewHTTPError(http.StatusInternalServerError, "Search failed")
+    }
+	
+    return c.JSON(http.StatusOK, results)
+}
+
 // RegisterRoutes ties the handlers to the Echo group
 func RegisterRoutes(g *echo.Group, h *Handler) {
 	g.GET("/profile", h.GetProfile)
 	g.PUT("/profile", h.UpdateProfile)
+	g.GET("/search", h.SearchMembers)
 }

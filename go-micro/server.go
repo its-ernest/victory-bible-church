@@ -63,6 +63,8 @@ func main() {
 
     // initialize the MemoryStore from my echox
 	memStore := store.NewMemoryStore()
+
+    //initializze model repos
     memberRepo := &repository.MemberRepository{Pool: dbPool}
 
 	authService := service.NewAuthService(memStore, memberRepo)
