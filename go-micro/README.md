@@ -65,7 +65,7 @@ Routes under the `/members` group are protected by JWT.
 
 * **Service Tracking**: create schema and endpoints for tracking weekly service types (Sunday Service, Mid-week, etc.).
 * **(DONE)Role Based Access**: implement middleware to differentiate between `Admin`, `Member`, and `Visitor` for sensitive routes.
-* **(DONE)Search Functionality**: implement server-side filtering and pagination for the member directory (admin only).
+* **Members groups or ministry**: once a member has a profile, we categorize them into groups (e.g., Choir, Ushers, Youth Ministry, Media Team).
 
 ## Future Notification & Optimization
 
