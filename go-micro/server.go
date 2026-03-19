@@ -106,7 +106,6 @@ func main() {
 	ministryGroup := e.Group("/ministries")
 	ministryGroup.Use(echojwt.WithConfig(echojwt.Config{
 		SigningKey: jwtSecret,
-		// ghost bug fixed: auth and members handlers now matches this claims
 		NewClaimsFunc: func(c *echo.Context) jwt.Claims {
 			return new(jwt.RegisteredClaims)
 		},

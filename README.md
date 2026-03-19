@@ -16,7 +16,7 @@ To bridge the gap between the sanctuary and the digital world by providing membe
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Backend** | Go 1.22+, Echo v5, PGX | High-concurrency API & Business Logic |
+| **Backend** | Go 1.25+, Echo v5, PGX | High-concurrency API & Business Logic |
 | **Database** | PostgreSQL 16 | Relational data & Sermon indexing |
 | **Auth** | JWT (v5) | Secure stateless authentication |
 | **Infrastructure** | Docker & Compose | Containerized development & deployment |
@@ -79,3 +79,4 @@ The backend is exposed at `http://localhost:8080`.
 * **Database**: Schema changes must be added to `init.sql` to stay synced across environments.
 
 ### Fork and clone your copy of this repo, add improvements, push. Then open a pull request to merge the changes together here
+### Include test files to ensure integrity and predictable performance
