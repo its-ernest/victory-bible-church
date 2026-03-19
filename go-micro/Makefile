@@ -1,5 +1,5 @@
 # Variables
-APP_NAME=church-api
+APP_NAME=go-app
 DB_CONTAINER=church-db
 DB_NAME=church_db
 DB_USER=user
@@ -18,6 +18,11 @@ down:
 build:
 	docker compose up -d --build
 
+# clean rebuild
+clean-build:
+	docker compose down -v
+	docker compose up -d --build
+
 # view real-time logs for the API only
 logs:
 	docker compose logs -f $(APP_NAME)
@@ -29,6 +34,8 @@ db-shell:
 # quick check: see all members in the database
 list-members:
 	docker exec -it $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT phone, first_name, last_name, email, updated_at FROM church.members;"
+list-ministries:
+	docker exec -it $(DB_CONTAINER) psql -U $(DB_USER) -d $(DB_NAME) -c "SELECT * FROM church.ministries;"
 
 # tail logs specifically for api requests
 tail-api:

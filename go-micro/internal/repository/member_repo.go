@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"church-backend/internal/models"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type MemberRepository struct {
@@ -21,14 +22,14 @@ func (r *MemberRepository) FindByPhone(ctx context.Context, phone string) (*mode
         JOIN church.member_status s ON m.status_id = s.id
         WHERE m.phone = $1
     `
-    err := r.Pool.QueryRow(ctx, query, phone).Scan(
-        &m.ID, 
-        &m.Phone, 
-        &m.FirstName, 
-        &m.LastName, 
-        &m.Email, 
-        &m.StatusID,
-        &m.Status,
+	err := r.Pool.QueryRow(ctx, query, phone).Scan(
+		&m.ID,
+		&m.Phone,
+		&m.FirstName,
+		&m.LastName,
+		&m.Email,
+		&m.StatusID,
+		&m.Status,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("member not found: %w", err)
@@ -55,21 +56,21 @@ func (r *MemberRepository) UpdateProfile(ctx context.Context, m *models.Member) 
 }
 
 func (r *MemberRepository) EnsureMember(ctx context.Context, phone string) error {
-    // default new signups to 'Visitor' (ID 2 in db seed)
-    query := `
+	// default new signups to 'Visitor' (ID 2 in db seed)
+	query := `
         INSERT INTO church.members (phone, status_id)
         VALUES ($1, (SELECT id FROM church.member_status WHERE name = 'Visitor'))
         ON CONFLICT (phone) DO NOTHING;
     `
-    _, err := r.Pool.Exec(ctx, query, phone)
-    return err
+	_, err := r.Pool.Exec(ctx, query, phone)
+	return err
 }
 
 func (r *MemberRepository) SearchMembers(ctx context.Context, query string, limit, offset int) ([]models.Member, error) {
-    var members []models.Member
-    
-    // search by name, email, or phone
-    sql := `
+	var members []models.Member
+
+	// search by name, email, or phone
+	sql := `
         SELECT m.id, m.phone, m.first_name, m.last_name, m.email, m.status_id, s.name as status
         FROM church.members m
         JOIN church.member_status s ON m.status_id = s.id
@@ -80,22 +81,22 @@ func (r *MemberRepository) SearchMembers(ctx context.Context, query string, limi
         ORDER BY m.last_name ASC
         LIMIT $2 OFFSET $3
     `
-    
-    searchParam := "%" + query + "%"
-    rows, err := r.Pool.Query(ctx, sql, searchParam, limit, offset)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
 
-    for rows.Next() {
-        var m models.Member
-        err := rows.Scan(&m.ID, &m.Phone, &m.FirstName, &m.LastName, &m.Email, &m.StatusID, &m.Status)
-        if err != nil {
-            return nil, err
-        }
-        members = append(members, m)
-    }
-    
-    return members, nil
+	searchParam := "%" + query + "%"
+	rows, err := r.Pool.Query(ctx, sql, searchParam, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var m models.Member
+		err := rows.Scan(&m.ID, &m.Phone, &m.FirstName, &m.LastName, &m.Email, &m.StatusID, &m.Status)
+		if err != nil {
+			return nil, err
+		}
+		members = append(members, m)
+	}
+
+	return members, nil
 }
